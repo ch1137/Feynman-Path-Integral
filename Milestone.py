@@ -18,10 +18,8 @@ def sum_energy(Path):
     e = 0
     E = 0
     for i in range(len(Path)-1):
-        e = ((m/2) * ((path[i+1] - path[i])/dt)**2 
-            + potential((path[i+1] + path[i])/2))
+        e = ((m/2) * ((Path[i+1] - Path[i])/dt)**2 
+            + potential((Path[i+1] + Path[i])/2))
         E += e
     return E
-
-    
     
