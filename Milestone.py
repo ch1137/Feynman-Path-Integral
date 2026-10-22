@@ -1,6 +1,5 @@
 import numpy as np
 
-
 #Define the number of spacial latice points, N
 N = 7
 #Define particle mass, m
@@ -26,17 +25,26 @@ potential = {'harmonic oscillatotor': harmonic_oscillator}
 def path_generator(x0, N):
     #Function to generate a path of N points starting from x0.
     #Parameters:    x0 (float), N (int)
-    #Returns:       array: A 1D array containing the generated path.
+    #Returns:       path(array): A 1D array containing the generated path.
     path = np.zeros(N)
     path[0] = x0
-    for i in range(N):
+    for i in range(N-1):
         path[i+1] = path[i] + np.random.uniform(-1, 1)
     return path
+
+def path_perturber(Path):
+    #Function to perturb a given path by adding random noise.
+    #Parameters:    Path (list)
+    #Returns:       new path (array): A 1D array containing the perturbed path.
+    for i in range(1, len(Path)):
+        Path[i] = Path[i] + np.random.uniform(-0.1, 0.1)
+    return Path
+
 
 def sum_energy(Path):
     #Function to calculate the sum of energy along a given path.
     #Parameters:    Path (list)
-    #Returns:       float: The total energy along the path.
+    #Returns:       Total energy (float): The total energy along the path.
     e = 0
     E = 0
     for i in range(len(Path)-1):
