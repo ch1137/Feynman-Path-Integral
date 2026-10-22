@@ -10,6 +10,8 @@ T = 4
 x0 = -2.0
 #Set the well type
 well_type = 'harmonic oscillator'
+#Set number of iterations for each path
+iterations = 1000
 
 dt = T/N
 
@@ -25,21 +27,12 @@ potential = {'harmonic oscillatotor': harmonic_oscillator}
 def path_generator(x0, N):
     #Function to generate a path of N points starting from x0.
     #Parameters:    x0 (float), N (int)
-    #Returns:       path(array): A 1D array containing the generated path.
+    #Returns:       path (array): A 1D array containing the generated path.
     path = np.zeros(N)
     path[0] = x0
     for i in range(N-1):
         path[i+1] = path[i] + np.random.uniform(-1, 1)
     return path
-
-def path_perturber(Path):
-    #Function to perturb a given path by adding random noise.
-    #Parameters:    Path (list)
-    #Returns:       new path (array): A 1D array containing the perturbed path.
-    for i in range(1, len(Path)):
-        Path[i] = Path[i] + np.random.uniform(-0.1, 0.1)
-    return Path
-
 
 def sum_energy(Path):
     #Function to calculate the sum of energy along a given path.
@@ -53,3 +46,31 @@ def sum_energy(Path):
         E += e
     return E
 
+def path_acceptor(old_path, new_path):
+    #Function that runs through criteria to accept or reject perturbed paths.
+    #Parameters:    old_path (list), new_path (list)
+    #Returns:       accept (bool): True if new path should be accepted.
+    accept = False
+    E_change = sum_energy(new_path) - sum_energy(old_path)
+    if E_change < 0:
+        accept = True
+    elif np.random.uniform(0, 1) < np.exp(-dt * E_change):
+        accept = True
+    return accept
+
+def point_perturber(Path, point):
+    #Function to perturb a random point in the path using gaussian random noise.
+    #Parameters:    Path (list)
+    #Returns:       new path (array): A 1D array containing the perturbed path.
+    Path[point] += np.random.normal(0, 0.01)
+    return Path
+
+def path_perturber(Path):
+    #Function to perturb the entire path using gaussian random noise.
+    #Parameters:    Path (list)
+    #Returns:       new path (array): A 1D array containing the perturbed path.
+    for point in range(1, len(Path)):
+        new_path = point_perturber(Path, point)
+        if path_acceptor(Path, new_path):
+            Path = new_path.copy()
+    return Path
