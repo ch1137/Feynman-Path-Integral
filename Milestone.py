@@ -23,7 +23,7 @@ def harmonic_oscillator(x):
     return 0.5 * x**2
 
 #Well types dictionary
-potential = {'harmonic oscillatotor': harmonic_oscillator}
+potential = {'harmonic oscillator': harmonic_oscillator}
 
 
 def path_generator(x0, N):
@@ -43,8 +43,8 @@ def sum_energy(Path):
     e = 0
     E = 0
     for i in range(len(Path)-1):
-        e = ((m/2) * ((Path[i+1] + Path[i])/dt)**2 
-            - potential[well_type]((Path[i+1] + Path[i])/2))
+        e = ((m/2) * ((Path[i+1] - Path[i])/dt)**2 
+            + potential[well_type]((Path[i+1] + Path[i])/2))
         E += e
     return E
 
@@ -107,7 +107,8 @@ def path_averager(Paths):
     #Parameters:    Paths (2D array)
     #Returns:       average_path (array): A 1D array containing the weighted average path.
     weightings = np.exp(-dt * Paths[:,-1])
+    Total_weight = np.sum(weightings)
     for i in range(num_paths):
         Paths[i,:] *= weightings[i]
     average_path = np.sum(Paths, axis=0)
-    return average_path
+    return average_path[0:-1]/Total_weight
