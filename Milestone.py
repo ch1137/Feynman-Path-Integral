@@ -41,7 +41,7 @@ def sum_energy(Path):
     e = 0
     E = 0
     for i in range(len(Path)-1):
-        e = ((m/2) * ((Path[i+1] - Path[i])/dt)**2 
+        e = ((m/2) * ((Path[i+1] + Path[i])/dt)**2 
             - potential[well_type]((Path[i+1] + Path[i])/2))
         E += e
     return E
@@ -62,7 +62,7 @@ def point_perturber(Path, point):
     #Function to perturb a random point in the path using gaussian random noise.
     #Parameters:    Path (list)
     #Returns:       new path (array): A 1D array containing the perturbed path.
-    Path[point] += np.random.normal(0, 0.01)
+    Path[point] += np.random.normal(0, 0.05)
     return Path
 
 def path_perturber(Path):
@@ -74,3 +74,12 @@ def path_perturber(Path):
         if path_acceptor(Path, new_path):
             Path = new_path.copy()
     return Path
+
+def path_simulator(x0, N, iterations):
+    #Function to generate and iterate pertibations of one path.
+    #Parameters:    x0 (float), N (int), iterations (int)
+    #Returns:       path (array): A 1D array containing the final path after iterations.
+    path = path_generator(x0, N)
+    for i in range(iterations):
+        path = path_perturber(path)
+    return path
