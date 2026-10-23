@@ -12,6 +12,8 @@ x0 = -2.0
 well_type = 'harmonic oscillator'
 #Set number of iterations for each path
 iterations = 1000
+#Set number of paths to simulate
+num_paths = 5
 
 dt = T/N
 
@@ -76,10 +78,36 @@ def path_perturber(Path):
     return Path
 
 def path_simulator(x0, N, iterations):
-    #Function to generate and iterate pertibations of one path.
+    #Function to generate and iterate pertibations of one path and calculate the total energy.
     #Parameters:    x0 (float), N (int), iterations (int)
-    #Returns:       path (array): A 1D array containing the final path after iterations.
+    #Returns:       path (array): A 1D array containing the final path after iterations and total energy.
     path = path_generator(x0, N)
     for i in range(iterations):
         path = path_perturber(path)
     return path
+
+def appending_energy(Path):
+    #Function to append the total energy of a path to the end of the path.
+    #Parameters:    Path (list)
+    #Returns:       path (array): A 1D array containing the path with total energy appended.
+    path = np.append(Path, sum_energy(Path))
+    return path
+
+def multi_path_simulator(x0, N, iterations, num_paths):
+    #Function to generate and iterate pertibations of multiple paths.
+    #Parameters:    x0 (float), N (int), iterations (int), num_paths (int)
+    #Returns:       paths (array): A 2D array containing the final paths after iterations.
+    paths = np.zeros((num_paths, N+1))
+    for i in range(num_paths):
+        paths[i,:] = appending_energy(path_simulator(x0, N, iterations))
+    return paths
+
+def path_averager(Paths):
+    #Function to calculate the weighted average path.
+    #Parameters:    Paths (2D array)
+    #Returns:       average_path (array): A 1D array containing the weighted average path.
+    weightings = np.exp(-dt * Paths[:,-1])
+    for i in range(num_paths):
+        Paths[i,:] *= weightings[i]
+    average_path = np.sum(Paths, axis=0)
+    return average_path
