@@ -1,20 +1,20 @@
 import numpy as np
 
-#Define the number of spacial latice points, N
+#Define the number of spacial latice points, N          #scales with O(n^2)
 N = 6
-#Define particle mass, m
+#Define particle mass, m                                #scales with O(1)
 m = 1.0
-#Define complex time interval, T
+#Define complex time interval, T                        #scales with O(1)
 T = 6
-#Define start and end point, xs, xe
+#Define start and end point, xs, xe                     #scales with O(1)
 xs = 0
 xe = 5
+#Set number of iterations for each path                 #scales with O(n)
+iterations = 10000
+#Set number of paths to simulate                        #scales with O(n)
+num_paths = 10
 #Set the well type
 well_type = 'harmonic oscillator'
-#Set number of iterations for each path
-iterations = 1000
-#Set number of paths to simulate
-num_paths = 5
 
 dt = T/N
 dx = (xe - xs)/N
@@ -63,10 +63,10 @@ def path_acceptor(old_path, new_path):
     return accept
 
 def point_perturber(Path, point):
-    #Function to perturb a random point in the path using gaussian random noise.
-    #Parameters:    Path (list)
+    #Function to perturb a set point in the path using gaussian random noise.
+    #Parameters:    Path (list), point (int)
     #Returns:       new path (array): A 1D array containing the perturbed path.
-    Path[point] += np.random.normal(0, dx/10)
+    Path[point] += np.random.normal(0, dx/100)
     return Path
 
 def path_perturber(Path):
@@ -106,14 +106,15 @@ def multi_path_simulator():
 
 def path_averager(Paths):
     #Function to calculate the weighted average path.
+    #Weights useful because number of iterations is finite and paths have higher energy than optimal.
     #Parameters:    Paths (2D array)
-    #Returns:       average_path (array): A 1D array containing the weighted average path.
+    #Returns:       average_path (array): A 1D array containing the average path after weighting and normalisation.
     weightings = np.exp(-dt * Paths[:,-1])
-    Total_weight = np.sum(weightings)
+    Total_weight = np.sum(weightings)   #Normalisation factor
     for i in range(num_paths):
-        Paths[i,:] *= weightings[i]
+        Paths[i,:] *= (weightings[i]/Total_weight)
     average_path = np.sum(Paths, axis=0)
-    return average_path[0:-1]/Total_weight
+    return average_path[0:-1]
 
 def run_paths():
     #Function to run the entire path simulation and averaging process.
@@ -122,7 +123,6 @@ def run_paths():
     average_path = path_averager(Paths)
     return average_path
 
-print(sum_energy([0,1,2,3,4,5]))
-a = path_perturber([0,1,2,3,4,5])
+a = run_paths()
 print(a)
 print(sum_energy(a))
