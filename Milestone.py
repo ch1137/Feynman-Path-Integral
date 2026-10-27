@@ -1,14 +1,14 @@
 import numpy as np
 
 #Define the number of spacial latice points, N
-N = 7
+N = 6
 #Define particle mass, m
 m = 1.0
 #Define complex time interval, T
-T = 4
+T = 6
 #Define start and end point, xs, xe
 xs = 0
-xe = 2
+xe = 5
 #Set the well type
 well_type = 'harmonic oscillator'
 #Set number of iterations for each path
@@ -29,14 +29,13 @@ potential = {'harmonic oscillator': harmonic_oscillator}
 
 
 def path_generator():
-    #Function to generate a path of N points starting from xs.
-    #Parameters:    xs (float), N (int)
+    #Function to generate a path of N points starting from xs and ending at xe.
     #Returns:       path (array): A 1D array containing the generated path.
     path = np.zeros(N)
     path[0] = xs
     path[-1] = xe
     for i in range(N-2):
-        path[i+1] = path[i] + np.random.normal(dx/2, dx/2)
+        path[i+1] = path[i] + np.random.normal(dx, dx)
     return path
 
 def sum_energy(Path):
@@ -67,7 +66,7 @@ def point_perturber(Path, point):
     #Function to perturb a random point in the path using gaussian random noise.
     #Parameters:    Path (list)
     #Returns:       new path (array): A 1D array containing the perturbed path.
-    Path[point] += np.random.normal(0, 0.05)
+    Path[point] += np.random.normal(0, dx/10)
     return Path
 
 def path_perturber(Path):
@@ -122,3 +121,8 @@ def run_paths():
     Paths = multi_path_simulator()
     average_path = path_averager(Paths)
     return average_path
+
+print(sum_energy([0,1,2,3,4,5]))
+a = path_perturber([0,1,2,3,4,5])
+print(a)
+print(sum_energy(a))
