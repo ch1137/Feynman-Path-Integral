@@ -112,3 +112,10 @@ def path_averager(Paths):
         Paths[i,:] *= weightings[i]
     average_path = np.sum(Paths, axis=0)
     return average_path[0:-1]/Total_weight
+
+def run_paths():
+    #Function to run the entire path simulation and averaging process.
+    #Returns:       average_path (array): A 1D array containing the weighted average path.
+    Paths = multi_path_simulator(x0, N, iterations, num_paths)
+    average_path = path_averager(Paths)
+    return average_path
