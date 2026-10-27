@@ -6,8 +6,9 @@ N = 7
 m = 1.0
 #Define complex time interval, T
 T = 4
-#Define starting point, x0
-x0 = -2.0
+#Define start and end point, xs, xe
+xs = 0
+xe = 2
 #Set the well type
 well_type = 'harmonic oscillator'
 #Set number of iterations for each path
@@ -16,6 +17,7 @@ iterations = 1000
 num_paths = 5
 
 dt = T/N
+dx = (xe - xs)/N
 
 
 #Define different well types
@@ -26,14 +28,15 @@ def harmonic_oscillator(x):
 potential = {'harmonic oscillator': harmonic_oscillator}
 
 
-def path_generator(x0, N):
-    #Function to generate a path of N points starting from x0.
-    #Parameters:    x0 (float), N (int)
+def path_generator():
+    #Function to generate a path of N points starting from xs.
+    #Parameters:    xs (float), N (int)
     #Returns:       path (array): A 1D array containing the generated path.
     path = np.zeros(N)
-    path[0] = x0
-    for i in range(N-1):
-        path[i+1] = path[i] + np.random.uniform(-1, 1)
+    path[0] = xs
+    path[-1] = xe
+    for i in range(N-2):
+        path[i+1] = path[i] + np.random.normal(dx/2, dx/2)
     return path
 
 def sum_energy(Path):
@@ -71,17 +74,17 @@ def path_perturber(Path):
     #Function to perturb the entire path using gaussian random noise.
     #Parameters:    Path (list)
     #Returns:       new path (array): A 1D array containing the perturbed path.
-    for point in range(1, len(Path)):
+    for point in range(1, len(Path)-1):
         new_path = point_perturber(Path, point)
         if path_acceptor(Path, new_path):
             Path = new_path.copy()
     return Path
 
-def path_simulator(x0, N, iterations):
+def path_simulator():
     #Function to generate and iterate pertibations of one path and calculate the total energy.
-    #Parameters:    x0 (float), N (int), iterations (int)
+    #Parameters:    xs (float), N (int), iterations (int)
     #Returns:       path (array): A 1D array containing the final path after iterations and total energy.
-    path = path_generator(x0, N)
+    path = path_generator()
     for i in range(iterations):
         path = path_perturber(path)
     return path
@@ -93,13 +96,13 @@ def appending_energy(Path):
     path = np.append(Path, sum_energy(Path))
     return path
 
-def multi_path_simulator(x0, N, iterations, num_paths):
+def multi_path_simulator():
     #Function to generate and iterate pertibations of multiple paths.
-    #Parameters:    x0 (float), N (int), iterations (int), num_paths (int)
+    #Parameters:    xs (float), N (int), iterations (int), num_paths (int)
     #Returns:       paths (array): A 2D array containing the final paths after iterations.
     paths = np.zeros((num_paths, N+1))
     for i in range(num_paths):
-        paths[i,:] = appending_energy(path_simulator(x0, N, iterations))
+        paths[i,:] = appending_energy(path_simulator())
     return paths
 
 def path_averager(Paths):
@@ -116,6 +119,6 @@ def path_averager(Paths):
 def run_paths():
     #Function to run the entire path simulation and averaging process.
     #Returns:       average_path (array): A 1D array containing the weighted average path.
-    Paths = multi_path_simulator(x0, N, iterations, num_paths)
+    Paths = multi_path_simulator()
     average_path = path_averager(Paths)
     return average_path
