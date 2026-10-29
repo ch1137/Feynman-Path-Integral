@@ -98,15 +98,6 @@ def appending_energy(Path):
     path = np.append(Path, sum_energy(Path))
     return path
 
-def multi_path_simulator():
-    #Function to generate and iterate pertibations of multiple paths.
-    #Parameters:    xs (float), N (int), iterations (int), num_paths (int)
-    #Returns:       paths (array): A 2D array containing the final paths after iterations.
-    paths = np.zeros((num_paths, N+1))
-    for i in range(num_paths):
-        paths[i,:] = appending_energy(path_simulator())
-    return paths
-
 def path_averager(Paths):
     #Function to calculate the weighted average path.
     #Weights useful because number of iterations is finite and paths have higher energy than optimal.
@@ -119,14 +110,16 @@ def path_averager(Paths):
     average_path = np.sum(Paths, axis=0)
     return average_path[0:-1]
 
-def run_paths():
+def run_path():
     #Function to run the entire path simulation and averaging process.
     #Returns:       average_path (array): A 1D array containing the weighted average path.
-    Paths = multi_path_simulator()
-    average_path = path_averager(Paths)
+    paths = np.zeros((num_paths, N+1))
+    for i in range(num_paths):
+        paths[i,:] = appending_energy(path_simulator())
+    average_path = path_averager(paths)
     return average_path
 
-a = run_paths()
+a = run_path()
 print(a)
 print(sum_energy(a))
 plt.plot(np.linspace(0, T, N),a)
