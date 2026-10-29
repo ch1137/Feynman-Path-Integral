@@ -1,14 +1,15 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
-#Define the number of spacial latice points, N          #scales with O(n^2)
-N = 6
+#Define the number of spacial latice points, N          #scales with O(n^2 + n)
+N = 7
 #Define particle mass, m                                #scales with O(1)
 m = 1.0
 #Define complex time interval, T                        #scales with O(1)
-T = 6
+T = 4
 #Define start and end point, xs, xe                     #scales with O(1)
 xs = 0
-xe = 5
+xe = 2
 #Set number of iterations for each path                 #scales with O(n)
 iterations = 10000
 #Set number of paths to simulate                        #scales with O(n)
@@ -27,6 +28,8 @@ def harmonic_oscillator(x):
 #Well types dictionary
 potential = {'harmonic oscillator': harmonic_oscillator}
 
+np.random.seed(1)  #Set random seed for reproducibility.
+#Each time the seed is used in calculations produces a subsiquent values in a pre determined pattern.
 
 def path_generator():
     #Function to generate a path of N points starting from xs and ending at xe.
@@ -126,3 +129,5 @@ def run_paths():
 a = run_paths()
 print(a)
 print(sum_energy(a))
+plt.plot(np.linspace(0, T, N),a)
+plt.show()
