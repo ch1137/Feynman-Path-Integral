@@ -12,7 +12,7 @@ xs = 0
 xe = 2
 #Set number of iterations for each path                 #scales with O(n)
 iterations = 10000
-#Set number of paths to simulate                        #scales with O(n)
+#Set number of paths to simulate                        #scales with O(n)       ~error scales with 1/n
 num_paths = 10
 #Set the well type
 well_type = 'harmonic oscillator'
@@ -104,7 +104,7 @@ def path_averager(Paths):
     #Parameters:    Paths (2D array)
     #Returns:       average_path (array): A 1D array containing the average path after weighting and normalisation,
     #               standard_error (array): A 1D array containing the error on each path point.
-    varience = np.zeros(num_paths)
+    varience = np.zeros(N)
     weightings = np.exp(-dt * Paths[:,-1])
     Total_weight = np.sum(weightings)                           #Normalisation factor
     Paths = Paths[:,:-1]                                        #Removes energy values
@@ -113,9 +113,9 @@ def path_averager(Paths):
     for i in range(num_paths):
         weighted_path[i,:] *= (weightings[i]/Total_weight)
     average_path = np.sum(weighted_path, axis=0)
-    for i in range(N-1):
-        varience[i] = np.sum(weightings[i]*(Paths[:,i] - average_path[i])**2)/ (Total_weight * (num_paths-1)/num_paths)
-    standard_error = np.sqrt(varience)/np.sqrt(2)
+    for i in range(N):
+        varience[i] = np.sum(weightings*(Paths[:,i] - average_path[i])**2)/ (Total_weight * (num_paths-1))
+    standard_error = np.sqrt(varience)/np.sqrt(num_paths)
     return average_path, standard_error
 
 def run_path():
@@ -129,6 +129,6 @@ def run_path():
 
 a, b = run_path()
 print(a)
-print(sum_energy(a))
-plt.plot(np.linspace(0, T, N),a)
-plt.show()
+print(b)
+#plt.errorbar(np.linspace(0, T, N),a, yerr= b)
+#plt.show()
