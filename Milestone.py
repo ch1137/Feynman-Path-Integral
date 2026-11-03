@@ -108,7 +108,7 @@ def path_averager(Paths):
     Total_weight = np.sum(weightings)   #Normalisation factor
     Paths = Paths[0:-1]
     weighted_path = Paths.copy()
-    for i in range(num_paths+1):
+    for i in range(num_paths):
         weighted_path[i,:] *= (weightings[i]/Total_weight)
     average_path = np.sum(weighted_path, axis=0)
     varience = np.sum(weightings*(Paths - average_path)**2) / (Total_weight * (N-1)/N)
