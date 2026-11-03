@@ -104,14 +104,17 @@ def path_averager(Paths):
     #Parameters:    Paths (2D array)
     #Returns:       average_path (array): A 1D array containing the average path after weighting and normalisation,
     #               standard_error (array): A 1D array containing the error on each path point.
+    varience = np.zeros(num_paths)
     weightings = np.exp(-dt * Paths[:,-1])
-    Total_weight = np.sum(weightings)   #Normalisation factor
-    Paths = Paths[0:-1]
+    Total_weight = np.sum(weightings)                           #Normalisation factor
+    Paths = Paths[:,:-1]                                        #Removes energy values
     weighted_path = Paths.copy()
+
     for i in range(num_paths):
         weighted_path[i,:] *= (weightings[i]/Total_weight)
     average_path = np.sum(weighted_path, axis=0)
-    varience = np.sum(weightings*(Paths - average_path)**2) / (Total_weight * (N-1)/N)
+    for i in range(N-1):
+        varience[i] = np.sum(weightings[i]*(Paths[:,i] - average_path[i])**2)/ (Total_weight * (num_paths-1)/num_paths)
     standard_error = np.sqrt(varience)/np.sqrt(2)
     return average_path, standard_error
 
@@ -122,9 +125,9 @@ def run_path():
     for i in range(num_paths):
         paths[i,:] = appending_energy(path_simulator())
     average_path, std_error = path_averager(paths)
-    return average_path
+    return average_path, std_error
 
-a = run_path()
+a, b = run_path()
 print(a)
 print(sum_energy(a))
 plt.plot(np.linspace(0, T, N),a)
