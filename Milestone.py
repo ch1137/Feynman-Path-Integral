@@ -99,16 +99,21 @@ def appending_energy(Path):
     return path
 
 def path_averager(Paths):
-    #Function to calculate the weighted average path.
+    #Function to calculate the weighted average path and the error.
     #Weights useful because number of iterations is finite and paths have higher energy than optimal.
     #Parameters:    Paths (2D array)
-    #Returns:       average_path (array): A 1D array containing the average path after weighting and normalisation.
+    #Returns:       average_path (array): A 1D array containing the average path after weighting and normalisation,
+    #               standard_error (array): A 1D array containing the error on each path point.
     weightings = np.exp(-dt * Paths[:,-1])
     Total_weight = np.sum(weightings)   #Normalisation factor
-    for i in range(num_paths):
-        Paths[i,:] *= (weightings[i]/Total_weight)
-    average_path = np.sum(Paths, axis=0)
-    return average_path[0:-1]
+    Paths = Paths[0:-1]
+    weighted_path = Paths.copy()
+    for i in range(num_paths+1):
+        weighted_path[i,:] *= (weightings[i]/Total_weight)
+    average_path = np.sum(weighted_path, axis=0)
+    varience = np.sum(weightings*(Paths - average_path)**2) / (Total_weight * (N-1)/N)
+    standard_error = np.sqrt(varience)/np.sqrt(2)
+    return average_path, standard_error
 
 def run_path():
     #Function to run the entire path simulation and averaging process.
@@ -116,7 +121,7 @@ def run_path():
     paths = np.zeros((num_paths, N+1))
     for i in range(num_paths):
         paths[i,:] = appending_energy(path_simulator())
-    average_path = path_averager(paths)
+    average_path, std_error = path_averager(paths)
     return average_path
 
 a = run_path()
