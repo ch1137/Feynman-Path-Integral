@@ -12,7 +12,7 @@ xs = 0
 xe = 2
 #Set number of iterations for each path                 #scales with O(n)
 iterations = 10000
-#Set number of paths to simulate                        #scales with O(n)       ~error scales with 1/n
+#Set number of paths to simulate                        #scales with O(n)
 num_paths = 10
 #Set the well type
 well_type = 'harmonic oscillator'
@@ -114,7 +114,7 @@ def path_averager(Paths):
         weighted_path[i,:] *= (weightings[i]/Total_weight)
     average_path = np.sum(weighted_path, axis=0)
     for i in range(N):
-        varience[i] = np.sum(weightings*(Paths[:,i] - average_path[i])**2)/ (Total_weight * (num_paths-1))
+        varience[i] = np.sum(weightings*(Paths[:,i] - average_path[i])**2)/ (Total_weight / num_paths * (num_paths-1))
     standard_error = np.sqrt(varience)/np.sqrt(num_paths)
     return average_path, standard_error
 
