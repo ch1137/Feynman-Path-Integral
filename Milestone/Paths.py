@@ -1,24 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-#Define the number of spacial latice points, N          #scales with O(n^2 + n)
-N = 7
-#Define particle mass, m                                #scales with O(1)
-m = 1.0
-#Define complex time interval, T                        #scales with O(1)
-T = 4
-#Define start and end point, xs, xe                     #scales with O(1)
-xs = 0
-xe = 2
-#Set number of iterations for each path                 #scales with O(n)
-iterations = 10000
-#Set number of paths to simulate                        #scales with O(n)
-num_paths = 10
-#Set the well type
+import Variables as V
+
 well_type = 'harmonic oscillator'
 
-dt = T/N
-dx = (xe - xs)/N
+dt = V.variable['complex time interval'] / V.variable['spatial latice points']
+dx = (V.variable['end point'] - V.variable['start point']) / V.variable['spatial latice points']
 
 
 #Define different well types
@@ -28,15 +16,15 @@ def harmonic_oscillator(x):
 #Well types dictionary
 potential = {'harmonic oscillator': harmonic_oscillator}
 
-np.random.seed(1)  #Set random seed for reproducibility.
 #Each time the seed is used in calculations produces a subsiquent values in a pre determined pattern.
 
 def path_generator():
     #Function to generate a path of N points starting from xs and ending at xe.
     #Returns:       path (array): A 1D array containing the generated path.
+    N = V.variable['spatial latice points']
     path = np.zeros(N)
-    path[0] = xs
-    path[-1] = xe
+    path[0] = V.variable['start point']
+    path[-1] = V.variable['end point']
     for i in range(N-2):
         path[i+1] = path[i] + np.random.normal(dx, dx)
     return path
@@ -47,6 +35,7 @@ def sum_energy(Path):
     #Returns:       Total energy (float): The total energy along the path.
     e = 0
     E = 0
+    m = V.variable['particle mass']
     for i in range(len(Path)-1):
         e = ((m/2) * ((Path[i+1] - Path[i])/dt)**2 
             + potential[well_type]((Path[i+1] + Path[i])/2))
@@ -87,7 +76,7 @@ def path_simulator():
     #Parameters:    xs (float), N (int), iterations (int)
     #Returns:       path (array): A 1D array containing the final path after iterations and total energy.
     path = path_generator()
-    for i in range(iterations):
+    for i in range(V.variable['number of iterations']):
         path = path_perturber(path)
     return path
 
@@ -104,6 +93,8 @@ def path_averager(Paths):
     #Parameters:    Paths (2D array)
     #Returns:       average_path (array): A 1D array containing the average path after weighting and normalisation,
     #               standard_error (array): A 1D array containing the error on each path point.
+    num_paths = V.variable['number of paths']
+    N = V.variable['spatial latice points']
     varience = np.zeros(N)
     weightings = np.exp(-dt * Paths[:,-1])
     Total_weight = np.sum(weightings)                           #Normalisation factor
@@ -121,14 +112,10 @@ def path_averager(Paths):
 def run_path():
     #Function to run the entire path simulation and averaging process.
     #Returns:       average_path (array): A 1D array containing the weighted average path.
+    num_paths = V.variable['number of paths']
+    N = V.variable['spatial latice points']
     paths = np.zeros((num_paths, N+1))
     for i in range(num_paths):
         paths[i,:] = appending_energy(path_simulator())
     average_path, std_error = path_averager(paths)
     return average_path, std_error
-
-a, b = run_path()
-print(a)
-print(b)
-#plt.errorbar(np.linspace(0, T, N),a, yerr= b)
-#plt.show()
