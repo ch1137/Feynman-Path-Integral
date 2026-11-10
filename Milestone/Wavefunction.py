@@ -68,19 +68,36 @@ def cubic (x, *params):
     return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3
 def quartic(x, *params):
     return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4
+def quintic(x, *params):
+    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4 + params[5]*x**5
+def sextic(x, *params):
+    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4 + params[5]*x**5 + params[6]*x**6
+def septic(x, *params):
+    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4 + params[5]*x**5 + params[6]*x**6 + params[7]*x**7
+def octic(x, *params):
+    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4 + params[5]*x**5 + params[6]*x**6 + params[7]*x**7 + params[8]*x**8
 
 #Dictionary with model and number of variables
-Model_variables = {'constant':1,
+Model_variables = {
+          'constant':1,
           'linear':2,
           'quadratic':3,
           'cubic':4,
-          'quartic':5}
+          'quartic':5,
+          'quintic':6,
+          'sextic':7,
+          'septic':8,
+          'octic':9}
 #Dictionary that links to model functions
 Models = {'constant':constant,
           'linear':linear,
           'quadratic':quadratic,
           'cubic':cubic,
-          'quartic':quartic}
+          'quartic':quartic,
+          'quintic':quintic,
+          'sextic':sextic,
+          'septic':septic,
+          'octic':octic}
 
 def simpson_integration(function, model_name,  params):
     #Function to calculate the numerical integral using Simpson's method
@@ -116,38 +133,39 @@ def run_models():
             model_name = m
     return params, params_errs, reduced_chi_squared, model_name
 
-def unnormalised_wavefunction(model_name, x, params):
+def unnormalised_distribution(model_name, x, params):
     return (np.exp(1)**(-Models[model_name](x, *params)))**2
 
 def normalisation_constant(model_name, params, params_errs):
     #Function to calculate the normalisation constant of the model function using Simsons Rule.
     #Returns:    norm_const (float): The normalisation constant of the model function.
     err_cont = np.zeros(len(params))
-    norm_const = 2/simpson_integration(unnormalised_wavefunction, model_name, params)
+    norm_const = 1/simpson_integration(unnormalised_distribution, model_name, params)
     #error contributions (functional approach)
     for i in range(len(params)):
         params[i] += params_errs[i]
-        err_cont[i] += (2/simpson_integration(unnormalised_wavefunction, model_name, params) - norm_const)**2
+        err_cont[i] += (1/simpson_integration(unnormalised_distribution, model_name, params) - norm_const)**2
         params[i] -= params_errs[i]
     norm_err = np.sqrt(np.sum(err_cont))
     return norm_const, norm_err
 
-def normalised_wavefunction(model_name, x, params, params_errs):
+def normalised_distribution(model_name, x, params, params_errs):
     norm_const, norm_err = normalisation_constant(model_name, params, params_errs)
-    return norm_const*unnormalised_wavefunction(model_name, x, params)
+    return norm_const*unnormalised_distribution(model_name, x, params)
 
 params, params_errs, reduced_chi_squared, model_name  = run_models()
 norm_const, norm_err = normalisation_constant(model_name, params, params_errs)
 smooth_x = np.linspace(t_values[0], t_values[-1], 1000) # more points, over range of data
 
 print(f'The path is best modeled using a {model_name} fit')
-print(params)
+print(params, params_errs)
 plt.figure(1)
 plt.scatter(t_values,displacement_values)
 plt.plot(smooth_x, Models[model_name](smooth_x, *params))
-
+print(reduced_chi_squared)
+print(norm_const, norm_err)
 plt.figure(2)
-plt.plot(smooth_x, normalised_wavefunction(model_name, smooth_x, params, params_errs), color='r')
+plt.plot(smooth_x, normalised_distribution(model_name, smooth_x, params, params_errs), color='r')
 plt.plot(smooth_x, np.exp(-0.5*smooth_x**2)**2 * np.sqrt(1/np.pi), color='b')
 plt.gca().set_ylim([0,0.8])
 plt.gca().set_xlim([0,4])
