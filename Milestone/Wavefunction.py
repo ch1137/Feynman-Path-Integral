@@ -121,7 +121,7 @@ def run_models():
     #            Prob (float): The probability of obtaining a chi-squared value as extreme as the observed value.
     reduced_chi_squared = np.inf
     for m, a in Model_variables.items():
-        if a > V.variable['spatial latice points']:
+        if a > V.variable['spatial latice points']-1:
             break
         initial_params = np.random.rand(a)
         initial_params[0] = V.variable['start point']
