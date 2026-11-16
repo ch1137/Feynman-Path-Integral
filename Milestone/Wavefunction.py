@@ -10,9 +10,7 @@ np.random.seed(V.variable['Random seed'])
 
 t_values = np.linspace(0, V.variable['complex time interval'], V.variable['spatial latice points'])
 r_values, r_errors = P.run_path()
-#even extension about t=0
-displacement_values = np.append(r_values[::-1], r_values)
-t_values = np.append(-t_values[::-1], t_values)
+displacement_values = r_values
 
 #Chi squared fitting functions
 def deal_with_zero_errors(errors):
@@ -29,7 +27,7 @@ def deal_with_zero_errors(errors):
         errors[i] += smallest_error
     return errors
 r_errors = deal_with_zero_errors(r_errors)
-displacement_errors = np.append(r_errors[::-1], r_errors)
+displacement_errors = r_errors
 
 #Chi squared fitting functions
 def chi_squared(model_params, model, x_data, y_data, y_err):
@@ -87,7 +85,8 @@ Model_variables = {
           'quintic':6,
           'sextic':7,
           'septic':8,
-          'octic':9}
+          'octic':9
+          }
 #Dictionary that links to model functions
 Models = {'constant':constant,
           'linear':linear,
@@ -97,7 +96,8 @@ Models = {'constant':constant,
           'quintic':quintic,
           'sextic':sextic,
           'septic':septic,
-          'octic':octic}
+          'octic':octic
+          }
 
 def simpson_integration(function, model_name,  params):
     #Function to calculate the numerical integral using Simpson's method
@@ -121,6 +121,8 @@ def run_models():
     #            Prob (float): The probability of obtaining a chi-squared value as extreme as the observed value.
     reduced_chi_squared = np.inf
     for m, a in Model_variables.items():
+        if a > V.variable['spatial latice points']:
+            break
         initial_params = np.random.rand(a)
         initial_params[0] = V.variable['start point']
         trial_params, trial_params_errs, trial_reduced_chi_squared, trial_Prob = path_model(Models[m], initial_params)
@@ -140,11 +142,11 @@ def normalisation_constant(model_name, params, params_errs):
     #Function to calculate the normalisation constant of the model function using Simsons Rule.
     #Returns:    norm_const (float): The normalisation constant of the model function.
     err_cont = np.zeros(len(params))
-    norm_const = 1/simpson_integration(unnormalised_distribution, model_name, params)
+    norm_const = 0.5/simpson_integration(unnormalised_distribution, model_name, params)
     #error contributions (functional approach)
     for i in range(len(params)):
         params[i] += params_errs[i]
-        err_cont[i] += (1/simpson_integration(unnormalised_distribution, model_name, params) - norm_const)**2
+        err_cont[i] += (0.5/simpson_integration(unnormalised_distribution, model_name, params) - norm_const)**2
         params[i] -= params_errs[i]
     norm_err = np.sqrt(np.sum(err_cont))
     return norm_const, norm_err
@@ -162,11 +164,17 @@ print(params, params_errs)
 plt.figure(1)
 plt.scatter(t_values,displacement_values)
 plt.plot(smooth_x, Models[model_name](smooth_x, *params))
+plt.gca().set_ylim([0,2.2])
+plt.gca().set_xlim([0,4.4])
+plt.xlabel(r'Complex Time $\tau$', fontsize=14)
+plt.ylabel(r'Displacement $x$', fontsize=14)
 print(reduced_chi_squared)
 print(norm_const, norm_err)
 plt.figure(2)
-plt.plot(smooth_x, normalised_distribution(model_name, smooth_x, params, params_errs), color='r')
-plt.plot(smooth_x, np.exp(-0.5*smooth_x**2)**2 * np.sqrt(1/np.pi), color='b')
+plt.plot(smooth_x, normalised_distribution(model_name, smooth_x, params, params_errs), color='b')
+plt.plot(smooth_x, np.exp(-0.5*smooth_x**2)**2 * np.sqrt(1/np.pi), color='r', linestyle='--')
 plt.gca().set_ylim([0,0.8])
 plt.gca().set_xlim([0,4])
+plt.xlabel(r'Complex Time $\tau$', fontsize=14)
+plt.ylabel(r'Probability Amplitude $|\phi|^2$', fontsize=14)
 plt.show()
