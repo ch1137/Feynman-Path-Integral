@@ -159,6 +159,7 @@ params, params_errs, reduced_chi_squared, model_name  = run_models()
 norm_const, norm_err = normalisation_constant(model_name, params, params_errs)
 smooth_x = np.linspace(t_values[0], t_values[-1], 1000) # more points, over range of data
 
+print(V.variable['spatial latice points'])
 print(f'The path is best modeled using a {model_name} fit')
 print(params, params_errs)
 plt.figure(1)
