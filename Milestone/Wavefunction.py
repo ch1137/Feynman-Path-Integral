@@ -55,51 +55,15 @@ def path_model(model_function, initial_values):
     params_errs = np.sqrt(np.diag(cov))
     return params, params_errs, reduced_chi_squared.astype(float), Prob.astype(float)
 
-#Define set of Models for fitting
-def constant(x, *params):
-    return params[0]
-def linear (x, *params):
-    return params[0] + params[1]*x
-def quadratic (x, *params):
-    return params[0] + params[1]*x + params[2]*x**2
-def cubic (x, *params):
-    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3
-def quartic(x, *params):
-    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4
-def quintic(x, *params):
-    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4 + params[5]*x**5
-def sextic(x, *params):
-    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4 + params[5]*x**5 + params[6]*x**6
-def septic(x, *params):
-    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4 + params[5]*x**5 + params[6]*x**6 + params[7]*x**7
-def octic(x, *params):
-    return params[0] + params[1]*x + params[2]*x**2 + params[3]*x**3 + params[4]*x**4 + params[5]*x**5 + params[6]*x**6 + params[7]*x**7 + params[8]*x**8
+def polynomial(x, *params):
+    y = 0
+    for i, c in enumerate(params):
+        y += c*x**i
+    return y
+def sigmoid(x, absolute_max):
+    return x / (1 + (x/absolute_max)**2)**(1/2)
 
-#Dictionary with model and number of variables
-Model_variables = {
-          'constant':1,
-          'linear':2,
-          'quadratic':3,
-          'cubic':4,
-          'quartic':5,
-          'quintic':6,
-          'sextic':7,
-          'septic':8,
-          'octic':9
-          }
-#Dictionary that links to model functions
-Models = {'constant':constant,
-          'linear':linear,
-          'quadratic':quadratic,
-          'cubic':cubic,
-          'quartic':quartic,
-          'quintic':quintic,
-          'sextic':sextic,
-          'septic':septic,
-          'octic':octic
-          }
-
-def simpson_integration(function, model_name,  params):
+def simpson_integration(function, params):
     #Function to calculate the numerical integral using Simpson's method
     #Returns:   Area(float): total numerical value of the integration
     Area = 0
@@ -110,7 +74,7 @@ def simpson_integration(function, model_name,  params):
             t1 = ts + i*dt
             tm = ts + (i+1/2)*dt
             t2 = ts + (i+1)*dt
-            Area += dt/6 * (function(model_name, t1, params) + 4*function(model_name, tm, params) + function(model_name, t2, params))
+            Area += dt/6 * (function(t1, params) + 4*function(tm, params) + function(t2, params))
     return Area
 
 def run_models():
@@ -120,51 +84,48 @@ def run_models():
     #            reduced_chi_squared (float): The reduced chi-squared value of the fit.
     #            Prob (float): The probability of obtaining a chi-squared value as extreme as the observed value.
     reduced_chi_squared = np.inf
-    for m, a in Model_variables.items():
-        if a > V.variable['spatial latice points']-1:
-            break
-        initial_params = np.random.rand(a)
+    for order in range(round(sigmoid(V.variable['spatial latice points'], V.variable['max polynomial order']))):
+        initial_params = np.random.rand(order+1)
         initial_params[0] = V.variable['start point']
-        trial_params, trial_params_errs, trial_reduced_chi_squared, trial_Prob = path_model(Models[m], initial_params)
+        trial_params, trial_params_errs, trial_reduced_chi_squared, trial_Prob = path_model(polynomial, initial_params)
         #Minimise reduced chi squared without overfitting (<1).
         if (trial_reduced_chi_squared >= 1 and trial_reduced_chi_squared < reduced_chi_squared):
             params = trial_params
             params_errs = trial_params_errs
             reduced_chi_squared = trial_reduced_chi_squared
-            prob = trial_Prob
-            model_name = m
-    return params, params_errs, reduced_chi_squared, model_name
+            model_order = order
+    return params, params_errs, reduced_chi_squared, model_order
 
-def unnormalised_distribution(model_name, x, params):
-    return (np.exp(1)**(-Models[model_name](x, *params)))**2
+def unnormalised_distribution(x, params):
+    return (np.exp(1)**(-polynomial(x, *params)))**2
 
-def normalisation_constant(model_name, params, params_errs):
+def normalisation_constant(params, params_errs):
     #Function to calculate the normalisation constant of the model function using Simsons Rule.
     #Returns:    norm_const (float): The normalisation constant of the model function.
     err_cont = np.zeros(len(params))
-    norm_const = 0.5/simpson_integration(unnormalised_distribution, model_name, params)
+    norm_const = 0.5/simpson_integration(unnormalised_distribution, params)
     #error contributions (functional approach)
     for i in range(len(params)):
         params[i] += params_errs[i]
-        err_cont[i] += (0.5/simpson_integration(unnormalised_distribution, model_name, params) - norm_const)**2
+        err_cont[i] += (0.5/simpson_integration(unnormalised_distribution, params) - norm_const)**2
         params[i] -= params_errs[i]
     norm_err = np.sqrt(np.sum(err_cont))
     return norm_const, norm_err
 
-def normalised_distribution(model_name, x, params, params_errs):
-    norm_const, norm_err = normalisation_constant(model_name, params, params_errs)
-    return norm_const*unnormalised_distribution(model_name, x, params)
+def normalised_distribution(x, params, params_errs):
+    norm_const, norm_err = normalisation_constant(params, params_errs)
+    return norm_const*unnormalised_distribution(x, params)
 
-params, params_errs, reduced_chi_squared, model_name  = run_models()
-norm_const, norm_err = normalisation_constant(model_name, params, params_errs)
+params, params_errs, reduced_chi_squared, model_order  = run_models()
+norm_const, norm_err = normalisation_constant(params, params_errs)
 smooth_x = np.linspace(t_values[0], t_values[-1], 1000) # more points, over range of data
 
 print(V.variable['spatial latice points'])
-print(f'The path is best modeled using a {model_name} fit')
+print(f'The path is best modeled using a {model_order} fit')
 print(params, params_errs)
 plt.figure(1)
 plt.scatter(t_values,displacement_values)
-plt.plot(smooth_x, Models[model_name](smooth_x, *params))
+plt.plot(smooth_x, polynomial(smooth_x, *params))
 plt.gca().set_ylim([0,2.2])
 plt.gca().set_xlim([0,4.4])
 plt.xlabel(r'Complex Time $\tau$', fontsize=14)
@@ -172,7 +133,7 @@ plt.ylabel(r'Displacement $x$', fontsize=14)
 print(reduced_chi_squared)
 print(norm_const, norm_err)
 plt.figure(2)
-plt.plot(smooth_x, normalised_distribution(model_name, smooth_x, params, params_errs), color='b')
+plt.plot(smooth_x, normalised_distribution(smooth_x, params, params_errs), color='b')
 plt.plot(smooth_x, np.exp(-0.5*smooth_x**2)**2 * np.sqrt(1/np.pi), color='r', linestyle='--')
 plt.gca().set_ylim([0,0.8])
 plt.gca().set_xlim([0,4])
